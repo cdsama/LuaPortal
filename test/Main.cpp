@@ -5,90 +5,58 @@
 #include <luaportal/refcountedptr.h>
 using namespace luaportal;
 
-class Foo
-{    
+class A {
 public:
-    Foo()
-    {
-    }
-
-    virtual ~Foo()
-    {
-    }
-
-    static Foo* GetFoo()
-    {
-        static Foo f;
-        return &f;
-    }
-
-    void Test()
-    {
-        std::cout << name << " " << ID << std::endl;
+    virtual void print(lua_State* L) {
+        luaL_dostring(L, "print ('called A::print')");
     }
 
     std::string name;
-    int GetID() const
+};
+
+class B :  public A {
+public:
+    virtual void print(lua_State* L) {
+        luaL_dostring(L, "print ('called B::print')");
+    }
+
+    static B* GetInstance()
     {
-        return ID;
+        static B b;
+        return &b;
+    }
+
+    int GetID() const 
+    {
+        return id_;
     }
 
     void SetID(int id)
     {
-        ID = id;
+        id_ = id;
     }
 
 private:
-    int ID;
+    int id_;
 };
 
-class Bar : public Foo
-{
-public:
-    Bar() {
-        name = "bar";
-        SetID(888);
-    }
-    ~Bar() {}
-    static Bar* GetBar()
-    {
-        static Bar bar;
-        return &bar;
-    }
-};
+struct C : RefCountedObject{
 
-struct A : RefCountedObject {
-    virtual void print(lua_State* L) {
-        luaL_dostring(L, "print ('called A::print')");
-    }
-};
-
-struct B : A {
-    virtual void print(lua_State* L) {
-        luaL_dostring(L, "print ('called B::print')");
-    }
 };
 
 void TestNamespace(LuaState& ls)
 {
     ls.GlobalContext()
         .BeginNamespace("test")
-        .BeginClass<Foo>("Foo")
-        .AddData("name", &Foo::name)
-        .AddProperty("ID", &Foo::GetID, &Foo::SetID)
-        .AddProperty("ConstID", &Foo::GetID)
-        .AddStaticFunction("GetFoo", &Foo::GetFoo)
-        .AddFunction("Test", &Foo::Test)
-        .EndClass()
-        .DeriveClass<Bar, Foo>("Bar")
-        .AddStaticFunction("GetBar", &Bar::GetBar)
-        .EndClass()
         .BeginClass <A>("A")
-        .Def<RefCountedObjectPtr<A>>(Constructor<>())
+        .Def(Constructor<>())
+        .AddData("name", &A::name)
         .AddFunction("print", &A::print)
         .EndClass()
         .DeriveClass <B, A>("B")
-        .Def<RefCountedObjectPtr<B>>(Constructor<>())
+        .Def(Constructor<>())
+        .AddProperty("id", &B::GetID, &B::SetID)
+        .AddStaticFunction("GetInstance", &B::GetInstance)
         .EndClass()
         .EndNamespace();
 
@@ -97,20 +65,8 @@ void TestNamespace(LuaState& ls)
         std::cout << error << std::endl;
     };
 
-
-
-    ls.DoString("f = test.Foo.GetFoo() f.name = 'xiaoming' f:Test()", ErrorHandle);
     ls.DoFile("main.lua", ErrorHandle);
-
-    auto add = ls.GetGlobal("add");
-    std::cout << add(1, 2) << std::endl;
-    auto vbar = ls.GetGlobal("vbar");
-
-    std::cout << vbar["name"] << vbar["ID"] << std::endl;
-
-    ls.DoString("vbar:Test()", ErrorHandle);
-
-    std::cout << "End" << std::endl;
+    ls.DoString("local b = test.B.GetInstance() b:print()");
 }
 
 void TestStack(LuaState& ls)
@@ -155,11 +111,11 @@ void TestStack(LuaState& ls)
     Push <A&>(L, a);
     Push <A const&>(L, a);
 
-    RefCountedObjectPtr <A> pa;
-    RefCountedObjectPtr <A const> pac;
+    RefCountedObjectPtr <C> pc;
+    RefCountedObjectPtr <C const> pcc;
 
-    Push(L, pa);   lua_pop(L, 1);
-    Push(L, pac);  lua_pop(L, 1);
+    Push(L, pc);   lua_pop(L, 1);
+    Push(L, pcc);  lua_pop(L, 1);
     Push(L, a);    lua_pop(L, 1);
     Push(L, ac);   lua_pop(L, 1);
 
