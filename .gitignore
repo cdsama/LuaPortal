@@ -1,0 +1,4 @@
+.vscode/
+Build
+*.exe
+test/lua
