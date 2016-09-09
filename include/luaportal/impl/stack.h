@@ -472,7 +472,9 @@ public:
             lua_rawgeti(L, LUA_REGISTRYINDEX, auf->getRef());
             int nargs = PushArgs(L, p...);
             lua_pcall(L, nargs, 1, 0);
-            return Stack<R>::Get(L, -1);
+            R value = Stack<R>::Get(L, -1);
+            lua_pop(L, 1);
+            return value;
         };
     }
     
@@ -508,7 +510,7 @@ public:
         } 
         else if(lua_isuserdata(L, index))
         {
-            func =(decltype(func)(*luaL_checkudata(L, index, typeid(func).name())));
+            func = *((std::function<FT>*)(luaL_checkudata(L, index, typeid(func).name())));
         } else if(lua_isnil(L, index)) {
             func = nullptr;
         } else {
@@ -521,7 +523,7 @@ public:
     
     ~FunctionTransfer()
     {
-        if(state) {
+        if(state) {            
             luaL_unref(state, LUA_REGISTRYINDEX, ref);
         }
     }
