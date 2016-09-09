@@ -85,7 +85,7 @@ void TestNamespace(LuaState& ls)
 
     auto ErrorHandle = [](const std::string& error)
     {
-        std::cout << error << std::endl;
+        REDLOG(error);
     };
 
     ls.DoFile("main.lua", ErrorHandle);
@@ -195,10 +195,22 @@ void TestStack(LuaState& ls)
     Push(L, a);    lua_pop(L, 1);
     Push(L, ac);   lua_pop(L, 1);
 
-    Stack <A*>::Push(L, &a); lua_pop(L, 1);
-    Stack <A* const>::Push(L, &a); lua_pop(L, 1);
-    Stack <A const*>::Push(L, &a); lua_pop(L, 1);
-    Stack <A const* const>::Push(L, &a); lua_pop(L, 1);
+    Stack<A*>::Push(L, &a); lua_pop(L, 1);
+    Stack<A* const>::Push(L, &a); lua_pop(L, 1);
+    Stack<A const*>::Push(L, &a); lua_pop(L, 1);
+    Stack<A const* const>::Push(L, &a); lua_pop(L, 1);
+
+    std::function<void()> pushfunc = []() {
+        std::cout << "Test std::function" << std::endl;
+    };
+    std::function<int(int)> pushfunc2 = [](int i) {
+        return i;
+    };
+    Stack<std::function<void()>>::Push(L, pushfunc);
+    Stack<std::function<void()>>::Get(L, -1)();
+    Stack<std::function<int(int)>>::Push(L, pushfunc2);
+    Stack<std::function<int(int)>>::Get(L, -1)(1);
+    lua_pop(L, 2);
 
     lua_settop(L, idx);
 }

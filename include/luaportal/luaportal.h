@@ -18,7 +18,7 @@ namespace luaportal
     // Forward declaration
     template<typename T>
     struct Stack;
-    
+#include "impl/utils.h"
 #include "impl/luahelpers.h"
 #include "impl/typetraits.h"
 #include "impl/functraits.h"

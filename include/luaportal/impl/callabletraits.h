@@ -1,8 +1,3 @@
-/**
- * Thanks to https://github.com/sth/callable.hpp
- * That's awesome.
- */
-
 /** Count the number of types given to the template */
 template<typename... Types>
 struct tva_count;
@@ -16,7 +11,6 @@ template<typename Type, typename... Types>
 struct tva_count<Type, Types...> {
     static const size_t value = tva_count<Types...>::value + 1;
 };
-
 
 /** Get the nth type given to the template */
 template<size_t n, typename... Types>
@@ -61,7 +55,6 @@ template<typename Class, typename Ret, typename... Args>
 struct callable_traits_memfn<Ret(Class::*)(Args...) const> : callable_traits_fn<Ret(Args...)> {
 };
 
-
 // classes with operator()
 template<typename Callable>
 struct callable_traits_d : luaportal::callable_traits_memfn<decltype(&Callable::operator())> {
@@ -82,9 +75,7 @@ template<typename Ret, typename... Args>
 struct callable_traits_d<std::function<Ret(Args...)>> : luaportal::callable_traits_fn<Ret(Args...)> {
 };
 
-
 // Main template
-
 template<typename Callable>
 struct callable_traits : luaportal::callable_traits_d<typename std::remove_reference<Callable>::type> {
 };

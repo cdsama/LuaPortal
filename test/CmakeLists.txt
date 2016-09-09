@@ -10,6 +10,14 @@ if (MSVC)
   set (LIB_PREFIX lib)
 else (MSVC)
   set (LIB_PREFIX)
+
+  # Tell compiler to use latest C/C++ language standards
+  set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  # Statically link libstdc++ and libgcc
+  # so the runtime environment has no need to install extra depdendencies
+  set (CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc")
+  # Tell cmake not to add rpath to executables
+  set (CMAKE_SKIP_RPATH TRUE)
 endif (MSVC)
 
 set (lua_version 5.3.3)

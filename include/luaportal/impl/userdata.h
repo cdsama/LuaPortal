@@ -151,7 +151,7 @@ private:
                                void const* baseClassKey,
                                bool canBeConst)
     {
-        assert(index > 0);
+        index = lua_absindex(L, index);
         Userdata* ud = 0;
         
         bool mismatch = false;
@@ -259,6 +259,136 @@ private:
         
         return ud;
     }
+
+    static bool CheckClass(lua_State* L,
+        int index,
+        void const* baseClassKey,
+        bool canBeConst)
+    {
+        AutoClearStack acs(L);
+        index = lua_absindex(L, index);
+        Userdata* ud = 0;
+
+        bool mismatch = false;
+        char const* got = 0;
+
+        lua_rawgetp(L, LUA_REGISTRYINDEX, baseClassKey);
+        if (!lua_istable(L, -1))
+        {
+            return false;
+        }
+
+        // Make sure we have a userdata.
+        if (lua_isuserdata(L, index))
+        {
+            // Make sure it's metatable is ours.
+            lua_getmetatable(L, index);
+            lua_rawgetp(L, -1, GetIdentityKey());
+            if (lua_isboolean(L, -1))
+            {
+                lua_pop(L, 1);
+
+                // If __const is present, object is NOT const.
+                rawgetfield(L, -1, "__const");
+                if (!(lua_istable(L, -1) || lua_isnil(L, -1)))
+                {
+                    return false;
+                }
+                bool const IsConst = lua_isnil(L, -1);
+                lua_pop(L, 1);
+
+                // Replace the class table with the const table if needed.
+                if (IsConst)
+                {
+                    rawgetfield(L, -2, "__const");
+                    if (!lua_istable(L, -1))
+                    {
+                        return false;
+                    }
+                    lua_replace(L, -3);
+                }
+
+                for (;;)
+                {
+                    if (lua_rawequal(L, -1, -2))
+                    {
+                        lua_pop(L, 2);
+
+                        // Match, now check const-ness.
+                        if (IsConst && !canBeConst)
+                        {
+                            REDLOG("index" << index << "cannot be const");
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        // Replace current metatable with it's base class.
+                        rawgetfield(L, -1, "__parent");
+                        /*
+                        ud
+                        class metatable
+                        ud metatable
+                        ud __parent(nil)
+                        */
+
+                        if (lua_isnil(L, -1))
+                        {
+                            lua_remove(L, -1);
+                            // Mismatch, but its one of ours so Get a type name.
+                            rawgetfield(L, -1, "__type");
+                            lua_insert(L, -3);
+                            lua_pop(L, 1);
+                            got = lua_tostring(L, -2);
+                            mismatch = true;
+                            break;
+                        }
+                        else
+                        {
+                            lua_remove(L, -2);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                lua_pop(L, 2);
+                mismatch = true;
+            }
+        }
+        else
+        {
+            mismatch = true;
+        }
+
+        if (mismatch)
+        {
+            if (!(lua_type(L, -1) == LUA_TTABLE))
+            {
+                return false;
+            }
+            rawgetfield(L, -1, "__type");
+            if (!(lua_type(L, -1) == LUA_TSTRING))
+            {
+                return false;
+            }
+            char const* const expected = lua_tostring(L, -1);
+
+            if (got == 0)
+            {
+                got = lua_typename(L, lua_type(L, index));
+            }
+
+            REDLOG(expected << " expected, got " << got);
+            return false;
+        }
+
+        return true;
+    }
     
 public:
     virtual ~Userdata() { }
@@ -285,11 +415,28 @@ public:
     template<typename T>
     static inline T* Get(lua_State* L, int index, bool canBeConst)
     {
-        if(lua_isnil(L, index))
-            return 0;
+        if (lua_isnil(L, index))
+        {
+            return nullptr;
+        }
         else
+        {
             return static_cast<T*>(GetClass(L, index,
-                                               ClassInfo<T>::GetClassKey(), canBeConst)->GetPointer());
+                ClassInfo<T>::GetClassKey(), canBeConst)->GetPointer());
+        }
+    }
+
+    template<typename T>
+    static inline bool CheckType(lua_State* L, int index, bool canBeConst)
+    {
+        if (lua_isnil(L, index))
+        {
+            return true;
+        }
+        else
+        {
+            return CheckClass(L, index, ClassInfo<T>::GetClassKey(), canBeConst);
+        }
     }
 };
 
@@ -613,6 +760,11 @@ struct StackHelper
     {
         return Userdata::Get<T>(L, index, true);
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return Userdata::CheckType<T>(L, index, true);
+    }
 };
 
 /**
@@ -634,6 +786,11 @@ struct StackHelper<T, false>
     {
         return *Userdata::Get<T>(L, index, true);
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return Userdata::CheckType<T>(L, index, true);
+    }
 };
 
 template<typename T, typename Enable = void>
@@ -651,6 +808,11 @@ struct ClassOrEnum<T, typename std::enable_if<std::is_class<T>::value>::type>
     {
         return StackHelper<T, TypeTraits::isContainer<T>::value>::Get(L, index);
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return true;
+    }
 };
 
 template<typename T>
@@ -664,6 +826,11 @@ struct ClassOrEnum<T, typename std::enable_if<std::is_enum<T>::value>::type>
     static inline T Get(lua_State* L, int index)
     {
         return static_cast<T>(luaL_checkinteger(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
     }
 };
 
@@ -684,6 +851,11 @@ public:
     static inline T Get(lua_State* L, int index)
     {
         return ClassOrEnum<T>::Get(L, index);
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return ClassOrEnum<T>::CheckType(L, index);
     }
 };
 
@@ -709,6 +881,11 @@ struct Stack<T*>
     {
         return Userdata::Get<T>(L, index, false);
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return Userdata::CheckType<T>(L, index, false);
+    }
 };
 
 // Strips the const off the right side of *
@@ -724,6 +901,11 @@ struct Stack<T* const>
     {
         return Userdata::Get<T>(L, index, false);
     }
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return Userdata::CheckType<T>(L, index, false);
+    }
+
 };
 
 // pointer to const
@@ -739,6 +921,11 @@ struct Stack<T const*>
     {
         return Userdata::Get<T>(L, index, true);
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return Userdata::CheckType<T>(L, index, true);
+    }
 };
 
 // Strips the const off the right side of *
@@ -753,6 +940,11 @@ struct Stack<T const* const>
     static inline T const* const Get(lua_State* L, int index)
     {
         return Userdata::Get<T>(L, index, true);
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return Userdata::CheckType<T>(L, index, true);
     }
 };
 
@@ -771,6 +963,16 @@ struct Stack<T&>
         if(!t)
             luaL_error(L, "nil passed to reference");
         return *t;
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        if (!lua_isuserdata(L, index))
+        {
+            REDLOG("nil passed to reference");
+            return false;
+        }
+        return Userdata::CheckType<T>(L, index, false);
     }
 };
 
@@ -791,6 +993,11 @@ struct RefStackHelper
     static return_type Get(lua_State* L, int index)
     {
         return Userdata::Get<T>(L, index, true);
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return Userdata::CheckType<T>(L, index, true);
     }
 };
 
@@ -813,6 +1020,15 @@ struct RefStackHelper<T, false>
         return *t;
     }
     
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        if (!lua_isuserdata(L, index))
+        {
+            REDLOG("nil passed to reference");
+            return false;
+        }
+        return Userdata::CheckType<T>(L, index, true);
+    }
 };
 
 // reference to const
@@ -829,5 +1045,10 @@ struct Stack<T const&>
     static typename helper_t::return_type Get(lua_State* L, int index)
     {
         return helper_t::Get(L, index);
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return helper_t::CheckType(L, index);
     }
 };

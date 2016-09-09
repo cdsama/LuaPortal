@@ -9,6 +9,11 @@ struct Stack<lua_State*>
     {
         return L;
     }
+
+    static inline bool CheckType(lua_State* L, int)
+    {
+        return true;
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -26,6 +31,11 @@ struct Stack<lua_CFunction>
     static lua_CFunction Get(lua_State* L, int index)
     {
         return lua_tocfunction(L, index);
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_iscfunction(L, index) ? true : false;
     }
 };
 
@@ -45,6 +55,11 @@ struct Stack<int>
     {
         return static_cast<int>(luaL_checkinteger(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -58,6 +73,11 @@ struct Stack<int const&>
     static inline int Get(lua_State* L, int index)
     {
         return static_cast<int >(luaL_checknumber(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 //------------------------------------------------------------------------------
@@ -76,6 +96,11 @@ struct Stack<unsigned int>
     {
         return static_cast<unsigned int>(luaL_checkinteger(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -89,6 +114,11 @@ struct Stack<unsigned int const&>
     static inline unsigned int Get(lua_State* L, int index)
     {
         return static_cast<unsigned int >(luaL_checknumber(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 
@@ -108,6 +138,11 @@ struct Stack<unsigned char>
     {
         return static_cast<unsigned char>(luaL_checkinteger(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -118,9 +153,9 @@ struct Stack<unsigned char const&>
         lua_pushnumber(L, static_cast<lua_Number>(value));
     }
     
-    static inline unsigned char Get(lua_State* L, int index)
+    static inline bool CheckType(lua_State* L, int index)
     {
-        return static_cast<unsigned char>(luaL_checknumber(L, index));
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 
@@ -140,6 +175,11 @@ struct Stack<short>
     {
         return static_cast<short>(luaL_checkinteger(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -153,6 +193,11 @@ struct Stack<short const&>
     static inline short Get(lua_State* L, int index)
     {
         return static_cast<short>(luaL_checknumber(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 
@@ -186,6 +231,11 @@ struct Stack<unsigned short const&>
     {
         return static_cast<unsigned short>(luaL_checknumber(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -204,6 +254,11 @@ struct Stack<long>
     {
         return static_cast<long>(luaL_checkinteger(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -217,6 +272,11 @@ struct Stack<long const&>
     static inline long Get(lua_State* L, int index)
     {
         return static_cast<long>(luaL_checknumber(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 
@@ -236,6 +296,11 @@ struct Stack<unsigned long>
     {
         return static_cast<unsigned long>(luaL_checkinteger(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -249,6 +314,11 @@ struct Stack<unsigned long const&>
     static inline unsigned long Get(lua_State* L, int index)
     {
         return static_cast<unsigned long>(luaL_checknumber(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 
@@ -268,6 +338,11 @@ struct Stack<float>
     {
         return static_cast<float>(luaL_checknumber(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -281,6 +356,11 @@ struct Stack<float const&>
     static inline float Get(lua_State* L, int index)
     {
         return static_cast<float>(luaL_checknumber(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 
@@ -299,6 +379,11 @@ template<> struct Stack<double>
     {
         return static_cast<double>(luaL_checknumber(L, index));
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
+    }
 };
 
 template<> struct Stack<double const&>
@@ -311,6 +396,11 @@ template<> struct Stack<double const&>
     static inline double Get(lua_State* L, int index)
     {
         return static_cast<double>(luaL_checknumber(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isnumber(L, index) ? true : false;
     }
 };
 
@@ -329,6 +419,11 @@ struct Stack<bool> {
     {
         return lua_toboolean(L, index) ? true : false;
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isboolean(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -341,6 +436,11 @@ struct Stack<bool const&> {
     static inline bool Get(lua_State* L, int index)
     {
         return lua_toboolean(L, index) ? true : false;
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isboolean(L, index) ? true : false;
     }
 };
 
@@ -361,6 +461,11 @@ struct Stack<char>
     {
         return luaL_checkstring(L, index) [0];
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isstring(L, index) ? true : false;
+    }
 };
 
 template<>
@@ -375,6 +480,11 @@ struct Stack<char const&>
     static inline char Get(lua_State* L, int index)
     {
         return luaL_checkstring(L, index) [0];
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isstring(L, index) ? true : false;
     }
 };
 
@@ -397,6 +507,11 @@ struct Stack<char const*>
     {
         return lua_isnil(L, index) ? 0 : luaL_checkstring(L, index);
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isstring(L, index) || lua_isnil(L, index) ? true : false;
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -417,6 +532,12 @@ struct Stack<std::string>
         const char *str = luaL_checklstring(L, index, &len);
         return std::string(str, len);
     }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isstring(L, index) ? true : false;
+    }
+
 };
 
 //------------------------------------------------------------------------------
@@ -436,6 +557,11 @@ struct Stack<std::string const&>
         size_t len;
         const char *str = luaL_checklstring(L, index, &len);
         return std::string(str, len);
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isstring(L, index) ? true : false;
     }
 };
 
@@ -549,5 +675,24 @@ struct Stack<std::function<FT> >
         std::function<FT> func;
         FunctionTransfer::Get(L, index, func);
         return func;
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        if (lua_isfunction(L, index))
+        {
+            return true;
+        }
+        else if (lua_isuserdata(L, index))
+        {
+            if (lua_getmetatable(L, index))
+            {
+                luaL_getmetatable(L, typeid(std::function<FT>).name());
+                bool ret = lua_rawequal(L, -1, -2);
+                lua_pop(L, 2);
+                return ret;
+            }
+        }
+        return false;
     }
 };
