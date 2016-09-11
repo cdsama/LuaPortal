@@ -50,3 +50,17 @@ public:
         lua_settop(L_, top_);
     }
 };
+
+static int ShowDebugMessage(lua_State* L)
+{
+    std::string ErrorMessage = lua_tostring(L, 1);
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_pcall(L, 0, 1, 0);
+    ErrorMessage.append("\n");
+    ErrorMessage.append(lua_tostring(L, -1));
+    ErrorMessage.append("\n");
+    lua_pop(L, 2);
+    REDLOG(ErrorMessage);
+    return 0;
+}

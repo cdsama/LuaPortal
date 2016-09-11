@@ -37,7 +37,7 @@ private:
          * The key and the table is popped off the stack
          */
         Proxy(lua_State* L)
-        : m_L(L) {
+        : L(L) {
             m_keyRef = luaL_ref(L, LUA_REGISTRYINDEX);
             m_tableRef = luaL_ref(L, LUA_REGISTRYINDEX);
         }
@@ -48,7 +48,7 @@ private:
          */
         int CreateRef() const {
             Push();
-            return luaL_ref(m_L, LUA_REGISTRYINDEX);
+            return luaL_ref(L, LUA_REGISTRYINDEX);
         }
         
         /*
@@ -56,29 +56,29 @@ private:
          * May invoke metamethods.
          */
         void Push() const {
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_tableRef);  
-            if (lua_istable(m_L, -1) || lua_isuserdata(m_L, -1))
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_tableRef);  
+            if (lua_istable(L, -1) || lua_isuserdata(L, -1))
             {
-                lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_keyRef);
-                lua_gettable(m_L, -2); // This may trigger the "index" event.
+                lua_rawgeti(L, LUA_REGISTRYINDEX, m_keyRef);
+                lua_gettable(L, -2); // This may trigger the "index" event.
             }
             else 
             {
-                lua_pushnil(m_L);
+                lua_pushnil(L);
             }
-            lua_remove(m_L, -2);
+            lua_remove(L, -2);
             
         }
         
     private:
-        lua_State* m_L;
+        lua_State* L;
         int m_tableRef;
         int m_keyRef;
         
     public:
         ~Proxy() {
-            luaL_unref(m_L, LUA_REGISTRYINDEX, m_tableRef);
-            luaL_unref(m_L, LUA_REGISTRYINDEX, m_keyRef);
+            luaL_unref(L, LUA_REGISTRYINDEX, m_tableRef);
+            luaL_unref(L, LUA_REGISTRYINDEX, m_keyRef);
         }
         
         /*
@@ -87,20 +87,20 @@ private:
          */
         template<typename T>
         Proxy& operator=(T v) {
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_tableRef);
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_keyRef);
-            Stack<T>::Push(m_L, v);
-            lua_settable(m_L, -3); // This may trgger the "newindex" event
-            lua_pop(m_L, 1);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_tableRef);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_keyRef);
+            Stack<T>::Push(L, v);
+            lua_settable(L, -3); // This may trgger the "newindex" event
+            lua_pop(L, 1);
             return *this;
         }
         
         Proxy& operator=(Proxy const& other) {
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_tableRef);
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_keyRef);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_tableRef);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_keyRef);
             other.Push();
-            lua_settable(m_L, -3); // This may trgger the "newindex" event
-            lua_pop(m_L, 1);
+            lua_settable(L, -3); // This may trgger the "newindex" event
+            lua_pop(L, 1);
             return *this;
         }
         
@@ -110,34 +110,34 @@ private:
          */
         template<typename T>
         Proxy& RawSet(T v) {
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_tableRef);
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_keyRef);
-            Stack<T>::Push(m_L, v);
-            lua_rawset(m_L, -3); // This may trgger the "newindex" event
-            lua_pop(m_L, 1);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_tableRef);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_keyRef);
+            Stack<T>::Push(L, v);
+            lua_rawset(L, -3); // This may trgger the "newindex" event
+            lua_pop(L, 1);
             return *this;
         }
         
         Proxy& RawSet(Proxy const& other) {
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_tableRef);
-            lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_keyRef);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_tableRef);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, m_keyRef);
             other.Push();
-            lua_rawset(m_L, -3); // This may trgger the "newindex" event
-            lua_pop(m_L, 1);
+            lua_rawset(L, -3); // This may trgger the "newindex" event
+            lua_pop(L, 1);
             return *this;
         }
         
-        lua_State* GetState() const { return m_L; }
+        lua_State* GetState() const { return L; }
         
         int GetType() const {
             Push();
-            int type = lua_type(m_L, -1);
-            lua_pop(m_L, 1);
+            int type = lua_type(L, -1);
+            lua_pop(L, 1);
             return type;
         }
         
         const char * TypeName(){
-            return lua_typename(m_L, GetType());
+            return lua_typename(L, GetType());
         }
         
         bool IsNil() const { return GetType() == LUA_TNIL; }
@@ -156,8 +156,8 @@ private:
         template<typename T>
         T Cast() const {
             Push();
-            T t = Stack<T>::Get(m_L, lua_gettop(m_L));
-            lua_pop(m_L, 1);
+            T t = Stack<T>::Get(L, lua_gettop(L));
+            lua_pop(L, 1);
             return t;
         }
         
@@ -177,38 +177,44 @@ private:
         template<typename T>
         Proxy operator[](T key) const {
             Push();
-            Stack<T>::Push(m_L, key);
-            return Proxy(m_L);
+            Stack<T>::Push(L, key);
+            return Proxy(L);
         }
         
         LuaRef operator()() const {
+            lua_pushcfunction(L, &ShowDebugMessage);
+            auto debugfunc = lua_gettop(L);
             Push();
-            lua_pcall(m_L, 0, 1, 0);
-            return PopLuaRef(m_L);
+            lua_pcall(L, 0, 1, debugfunc);
+            lua_remove(L, debugfunc);
+            return PopLuaRef(L);
         }
         
         template<typename... Args>
         LuaRef operator()(Args... args) const {
+            lua_pushcfunction(L, &ShowDebugMessage);
+            auto debugfunc = lua_gettop(L);
             Push();
-            int nargs = PushArgs(m_L, args...);
-            lua_pcall(m_L, nargs, 1, 0);
-            return PopLuaRef(m_L);
+            int nargs = PushArgs(L, args...);
+            lua_pcall(L, nargs, 1, 0);
+            lua_remove(L, debugfunc);
+            return PopLuaRef(L);
         }
         
         int Length() const {
             Push(); // push 1
-            lua_len(m_L, -1); // push 1
-            int len =(int)luaL_checkinteger(m_L, -1);
-            lua_pop(m_L, 2); // pop 2
+            lua_len(L, -1); // push 1
+            int len =(int)luaL_checkinteger(L, -1);
+            lua_pop(L, 2); // pop 2
             return len;
         }
         
         std::string ToString() const {
-            lua_getglobal(m_L, "tostring");
+            lua_getglobal(L, "tostring");
             Push();
-            lua_call(m_L, 1, 1);
-            std::string str = lua_tostring(m_L, 1);
-            lua_pop(m_L, 1);
+            lua_call(L, 1, 1);
+            std::string str = lua_tostring(L, 1);
+            lua_pop(L, 1);
             return str;
         }
         
@@ -221,7 +227,7 @@ private:
     };
     
 private:
-    lua_State* m_L;
+    lua_State* L;
     int m_ref;
     
     template<typename T>
@@ -246,7 +252,7 @@ private:
     int CreateRef() const {
         if(m_ref != LUA_REFNIL) {
             Push();
-            return luaL_ref(m_L, LUA_REGISTRYINDEX);
+            return luaL_ref(L, LUA_REGISTRYINDEX);
         }
         else {
             return LUA_REFNIL;
@@ -257,32 +263,32 @@ private:
      * Push the object onto the Lua stack
      */
     void Push() const {
-        lua_rawgeti(m_L, LUA_REGISTRYINDEX, m_ref);
+        lua_rawgeti(L, LUA_REGISTRYINDEX, m_ref);
     }
     
     /*
      * Pop the top of Lua stack and assign the ref to this->m_ref
      */
     void Pop() {
-        luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
-        m_ref = luaL_ref(m_L, LUA_REGISTRYINDEX);
+        luaL_unref(L, LUA_REGISTRYINDEX, m_ref);
+        m_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
     
 public:
     explicit LuaRef(lua_State* L)
-    : m_L(L),
+    : L(L),
     m_ref(LUA_REFNIL) {
     }
     
     template<typename T>
     LuaRef(lua_State* L, T v)
-    : m_L(L) {
-        Stack<T>::Push(m_L, v);
-        m_ref = luaL_ref(m_L, LUA_REGISTRYINDEX);
+    : L(L) {
+        Stack<T>::Push(L, v);
+        m_ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
     
     LuaRef(LuaRef const& other)
-    : m_L(other.m_L),
+    : L(other.L),
     m_ref(other.CreateRef()) {
     }
     
@@ -291,27 +297,27 @@ public:
      * May invoke metamethods.
      */
     LuaRef(Proxy const& proxy)
-    : m_L(proxy.GetState()),
+    : L(proxy.GetState()),
     m_ref(proxy.CreateRef()) {
     }
     
     ~LuaRef() {
-        luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
+        luaL_unref(L, LUA_REGISTRYINDEX, m_ref);
     }
     
     template<typename T>
     LuaRef& operator=(T rhs) {
-        luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
-        Stack<T>::Push(m_L, rhs);
-        m_ref = luaL_ref(m_L, LUA_REGISTRYINDEX);
+        luaL_unref(L, LUA_REGISTRYINDEX, m_ref);
+        Stack<T>::Push(L, rhs);
+        m_ref = luaL_ref(L, LUA_REGISTRYINDEX);
         return *this;
     }
     
     LuaRef& operator=(LuaRef const& rhs) {
-        luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
-        m_L = rhs.GetState();
+        luaL_unref(L, LUA_REGISTRYINDEX, m_ref);
+        L = rhs.GetState();
         rhs.Push();
-        m_ref = luaL_ref(m_L, LUA_REGISTRYINDEX);
+        m_ref = luaL_ref(L, LUA_REGISTRYINDEX);
         return *this;
     }
     
@@ -319,23 +325,23 @@ public:
      * May invoke metamethod.
      */
     LuaRef& operator=(Proxy const& rhs) {
-        luaL_unref(m_L, LUA_REGISTRYINDEX, m_ref);
-        m_L = rhs.GetState();
+        luaL_unref(L, LUA_REGISTRYINDEX, m_ref);
+        L = rhs.GetState();
         m_ref = rhs.CreateRef();
         return *this;
     }
     
     std::string ToString() const {
-        lua_getglobal(m_L, "tostring");
+        lua_getglobal(L, "tostring");
         Push();
-        lua_call(m_L, 1, 1);
-        std::string str = lua_tostring(m_L, 1);
-        lua_pop(m_L, 1);
+        lua_call(L, 1, 1);
+        std::string str = lua_tostring(L, 1);
+        lua_pop(L, 1);
         return str;
     }
     
     lua_State* GetState() const {
-        return m_L;
+        return L;
     }
     
     /*
@@ -345,8 +351,8 @@ public:
         int type;
         if(m_ref != LUA_REFNIL) {
             Push();
-            type = lua_type(m_L, -1);
-            lua_pop(m_L, 1);
+            type = lua_type(L, -1);
+            lua_pop(L, 1);
         }
         else {
             type = LUA_TNIL;
@@ -355,7 +361,7 @@ public:
     }
     
     const char * TypeName() {
-        return lua_typename(m_L, GetType());
+        return lua_typename(L, GetType());
     }
     
     bool IsNil() const { return GetType() == LUA_TNIL; }
@@ -373,8 +379,8 @@ public:
     template<typename T>
     T Cast() const {
         Push();
-        T t = Stack<T>::Get(m_L, lua_gettop(m_L));
-        lua_pop(m_L, 1);
+        T t = Stack<T>::Get(L, lua_gettop(L));
+        lua_pop(L, 1);
         return t;
     }
     
@@ -385,9 +391,9 @@ public:
     
     int Length() const {
         Push(); // push 1
-        lua_len(m_L, -1); // push 1
-        int len =(int)luaL_checkinteger(m_L, -1);
-        lua_pop(m_L, 2); // pop 2
+        lua_len(L, -1); // push 1
+        int len =(int)luaL_checkinteger(L, -1);
+        lua_pop(L, 2); // pop 2
         return len;
     }
     
@@ -411,22 +417,28 @@ public:
     template<typename T>
     Proxy operator[](T key) const {
         Push();
-        Stack<T>::Push(m_L, key);
-        return Proxy(m_L);
+        Stack<T>::Push(L, key);
+        return Proxy(L);
     }
     
     LuaRef operator()() const {
+        lua_pushcfunction(L, &ShowDebugMessage);
+        auto debugfunc = lua_gettop(L);
         Push();
-        lua_pcall(m_L, 0, 1, 0);
-        return PopLuaRef(m_L);
+        lua_pcall(L, 0, 1, debugfunc);
+        lua_remove(L, debugfunc);
+        return PopLuaRef(L);
     }
     
     template<typename... Args>
     LuaRef operator()(Args... args) const {
+        lua_pushcfunction(L, &ShowDebugMessage);
+        auto debugfunc = lua_gettop(L);
         Push();
-        int nargs = PushArgs(m_L, args...);
-        lua_pcall(m_L, nargs, 1, 0);
-        return PopLuaRef(m_L);
+        int nargs = PushArgs(L, args...);
+        lua_pcall(L, nargs, 1, debugfunc);
+        lua_remove(L, debugfunc);
+        return PopLuaRef(L);
     }
     
     static LuaRef GetGlobal(lua_State* L, char const* name) {

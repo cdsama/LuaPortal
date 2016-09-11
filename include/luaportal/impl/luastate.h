@@ -3,71 +3,74 @@
 /* A wrapper for lua_State */
 class LuaState {
 private:
-    lua_State *m_L;
+    lua_State *L;
     
 public:
-    
-    typedef std::function<void(const std::string&)> OnError;
-    
+        
     LuaState()
-    : m_L(luaS_newstate()) {
+    : L(luaS_newstate()) {
     }
     
     ~LuaState() {
-        luaS_close(m_L);
+        luaS_close(L);
     }
     
     lua_State* GetState() const {
-        return m_L;
+        return L;
     }
     
-    void DoFile(const std::string &path, OnError onError = nullptr) {
-        if(luaL_dofile(m_L, path.c_str())) {
-            std::string errstr = lua_tostring(m_L, -1);
-            lua_pop(m_L, 1);
-            if(onError) {
-                onError(errstr);
-            }
-        }        
-    }
-    
-    void DoString(const std::string &content, OnError onError = nullptr) {
-        if(luaL_dostring(m_L, content.c_str())) {
-            std::string errstr = lua_tostring(m_L, -1);
-            lua_pop(m_L, 1);
-            if(onError) {
-                onError(errstr);
-            }
+    void DoFile(const std::string &path) 
+    {
+        lua_pushcfunction(L, &ShowDebugMessage);
+        auto debugfunc = lua_gettop(L);
+        luaL_loadfile(L, path.c_str());
+        if (lua_pcall(L, 0, 0, debugfunc))
+        {
+            lua_pop(L, 1);
         }
+        
+        lua_remove(L, debugfunc);
+    }
+    
+    void DoString(const std::string &content) 
+    {
+        lua_pushcfunction(L, &ShowDebugMessage);
+        auto debugfunc = lua_gettop(L);
+        luaL_loadstring(L, content.c_str());
+        if (lua_pcall(L, 0, 0, debugfunc))
+        {
+            lua_pop(L, 1);
+        }
+        lua_remove(L, debugfunc);
     }
     
     void AddSearcher(lua_CFunction func)
     {
-        luaS_addSearcher(m_L, func);
+        luaS_addSearcher(L, func);
     }
     
     template<typename T>
     void SetGlobal(char const* name, T t)
     {
-        Push(m_L, t);
-        lua_setglobal(m_L, name);
+        Push(L, t);
+        lua_setglobal(L, name);
     }
     
     LuaRef GetGlobal(const char *name) {
-        return LuaRef::GetGlobal(m_L, name);
+        return LuaRef::GetGlobal(L, name);
     }
     
     Namespace GlobalContext() {
-        return Namespace::GetGlobalNamespace(m_L);
+        return Namespace::GetGlobalNamespace(L);
     }
     
     LuaRef NewNil() {
-        return LuaRef(m_L);
+        return LuaRef(L);
     }
     
     template<typename T>
     LuaRef NewLuaRef(T v) {
-        return LuaRef(m_L, v);
+        return LuaRef(L, v);
     }
     
 private:
