@@ -813,6 +813,12 @@ struct ClassOrEnum<T, typename std::enable_if<std::is_class<T>::value>::type>
     {
         return true;
     }
+
+    static inline T DefaultValue(lua_State* L, int)
+    {
+        static T t;
+        return t;
+    }
 };
 
 template<typename T>
@@ -831,6 +837,12 @@ struct ClassOrEnum<T, typename std::enable_if<std::is_enum<T>::value>::type>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isinteger(L, index) ? true : false;
+    }
+
+    static inline T DefaultValue(lua_State* L, int)
+    {
+        static T t;
+        return t;
     }
 };
 
@@ -856,6 +868,16 @@ public:
     static inline bool CheckType(lua_State* L, int index)
     {
         return ClassOrEnum<T>::CheckType(L, index);
+    }
+
+    static inline T DefaultValue(lua_State* L, int index)
+    {
+        return ClassOrEnum<T>::DefaultValue(L,index);
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(T).name();
     }
 };
 
@@ -886,6 +908,16 @@ struct Stack<T*>
     {
         return Userdata::CheckType<T>(L, index, false);
     }
+
+    static inline T* DefaultValue(lua_State* L, int)
+    {
+        return nullptr;
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(T*).name();
+    }
 };
 
 // Strips the const off the right side of *
@@ -906,6 +938,15 @@ struct Stack<T* const>
         return Userdata::CheckType<T>(L, index, false);
     }
 
+    static inline T* const DefaultValue(lua_State* L, int)
+    {
+        return nullptr;
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(T* const).name();
+    }
 };
 
 // pointer to const
@@ -926,6 +967,16 @@ struct Stack<T const*>
     {
         return Userdata::CheckType<T>(L, index, true);
     }
+
+    static inline T const* DefaultValue(lua_State* L, int)
+    {
+        return nullptr;
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(T const *).name();
+    }
 };
 
 // Strips the const off the right side of *
@@ -945,6 +996,16 @@ struct Stack<T const* const>
     static inline bool CheckType(lua_State* L, int index)
     {
         return Userdata::CheckType<T>(L, index, true);
+    }
+
+    static inline T const* const DefaultValue(lua_State* L, int)
+    {
+        return nullptr;
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(T const * const).name();
     }
 };
 
@@ -973,6 +1034,17 @@ struct Stack<T&>
             return false;
         }
         return Userdata::CheckType<T>(L, index, false);
+    }
+
+    static inline T& DefaultValue(lua_State* L, int)
+    {
+        static T t;
+        return t;
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(T&).name();
     }
 };
 
@@ -1050,5 +1122,16 @@ struct Stack<T const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return helper_t::CheckType(L, index);
+    }
+
+    static typename helper_t::return_type DefaultValue(lua_State* L, int)
+    {
+        static helper_t::return_type v = {};
+        return v;
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(helper_t::return_type).name();
     }
 };

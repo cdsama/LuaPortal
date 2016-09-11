@@ -14,6 +14,16 @@ struct Stack<lua_State*>
     {
         return true;
     }
+
+    static inline lua_State* DefaultValue(lua_State* L, int)
+    {
+        return L;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "lua_State*";
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -36,6 +46,16 @@ struct Stack<lua_CFunction>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_iscfunction(L, index) ? true : false;
+    }
+
+    static inline lua_CFunction DefaultValue(lua_State* L, int)
+    {
+        return nullptr;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "lua_CFunction";
     }
 };
 
@@ -60,6 +80,16 @@ struct Stack<int>
     {
         return lua_isinteger(L, index) ? true : false;
     }
+
+    static inline int DefaultValue(lua_State* L, int)
+    {
+        return 0;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "int";
+    }
 };
 
 template<>
@@ -78,6 +108,16 @@ struct Stack<int const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline int DefaultValue(lua_State* L, int)
+    {
+        return 0;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "int const &";
     }
 };
 //------------------------------------------------------------------------------
@@ -101,6 +141,16 @@ struct Stack<unsigned int>
     {
         return lua_isinteger(L, index) ? true : false;
     }
+
+    static inline unsigned int DefaultValue(lua_State* L, int)
+    {
+        return 0;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned int";
+    }
 };
 
 template<>
@@ -119,6 +169,16 @@ struct Stack<unsigned int const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline unsigned int DefaultValue(lua_State* L, int)
+    {
+        return 0;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned int const &";
     }
 };
 
@@ -143,6 +203,16 @@ struct Stack<unsigned char>
     {
         return lua_isinteger(L, index) ? true : false;
     }
+
+    static inline unsigned char DefaultValue(lua_State* L, int)
+    {
+        return static_cast<unsigned char>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned char";
+    }
 };
 
 template<>
@@ -153,9 +223,24 @@ struct Stack<unsigned char const&>
         lua_pushnumber(L, static_cast<lua_Number>(value));
     }
     
+    static inline unsigned char Get(lua_State* L, int index)
+    {
+        return static_cast<unsigned char>(luaL_checknumber(L, index));
+    }
+
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline unsigned char DefaultValue(lua_State* L, int)
+    {
+        return static_cast<unsigned char>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned char const &";
     }
 };
 
@@ -180,6 +265,16 @@ struct Stack<short>
     {
         return lua_isinteger(L, index) ? true : false;
     }
+
+    static inline short DefaultValue(lua_State* L, int)
+    {
+        return static_cast<short>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "short";
+    }
 };
 
 template<>
@@ -199,6 +294,16 @@ struct Stack<short const&>
     {
         return lua_isnumber(L, index) ? true : false;
     }
+
+    static inline short DefaultValue(lua_State* L, int)
+    {
+        return static_cast<short>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "shor const &";
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -216,6 +321,21 @@ struct Stack<unsigned short>
     static inline unsigned short Get(lua_State* L, int index)
     {
         return static_cast<unsigned short>(luaL_checkinteger(L, index));
+    }
+
+    static inline bool CheckType(lua_State* L, int index)
+    {
+        return lua_isinteger(L, index) ? true : false;
+    }
+
+    static inline unsigned short DefaultValue(lua_State* L, int)
+    {
+        return static_cast<unsigned short>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned short";
     }
 };
 
@@ -235,6 +355,16 @@ struct Stack<unsigned short const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline unsigned short DefaultValue(lua_State* L, int)
+    {
+        return static_cast<unsigned short>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned short const &";
     }
 };
 
@@ -259,6 +389,16 @@ struct Stack<long>
     {
         return lua_isinteger(L, index) ? true : false;
     }
+
+    static inline long DefaultValue(lua_State* L, int)
+    {
+        return static_cast<long>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "long";
+    }
 };
 
 template<>
@@ -277,6 +417,16 @@ struct Stack<long const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline long DefaultValue(lua_State* L, int)
+    {
+        return static_cast<long>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "long const &";
     }
 };
 
@@ -301,6 +451,16 @@ struct Stack<unsigned long>
     {
         return lua_isinteger(L, index) ? true : false;
     }
+
+    static inline unsigned long DefaultValue(lua_State* L, int)
+    {
+        return static_cast<unsigned long>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned long";
+    }
 };
 
 template<>
@@ -319,6 +479,16 @@ struct Stack<unsigned long const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline unsigned long DefaultValue(lua_State* L, int)
+    {
+        return static_cast<unsigned long>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "unsigned long const &";
     }
 };
 
@@ -343,6 +513,16 @@ struct Stack<float>
     {
         return lua_isnumber(L, index) ? true : false;
     }
+
+    static inline float DefaultValue(lua_State* L, int)
+    {
+        return static_cast<float>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "float";
+    }
 };
 
 template<>
@@ -361,6 +541,16 @@ struct Stack<float const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline float DefaultValue(lua_State* L, int)
+    {
+        return static_cast<float>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "float const &";
     }
 };
 
@@ -384,9 +574,20 @@ template<> struct Stack<double>
     {
         return lua_isnumber(L, index) ? true : false;
     }
+
+    static inline double DefaultValue(lua_State* L, int)
+    {
+        return static_cast<double>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "double";
+    }
 };
 
-template<> struct Stack<double const&>
+template<> 
+struct Stack<double const&>
 {
     static inline void Push(lua_State* L, double value)
     {
@@ -401,6 +602,16 @@ template<> struct Stack<double const&>
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isnumber(L, index) ? true : false;
+    }
+
+    static inline double DefaultValue(lua_State* L, int)
+    {
+        return static_cast<double>(0);
+    }
+
+    static inline const char * RequireType()
+    {
+        return "double const &";
     }
 };
 
@@ -424,6 +635,17 @@ struct Stack<bool> {
     {
         return lua_isboolean(L, index) ? true : false;
     }
+
+    static inline bool DefaultValue(lua_State* L, int)
+    {
+        return false;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "bool";
+    }
+
 };
 
 template<>
@@ -441,6 +663,16 @@ struct Stack<bool const&> {
     static inline bool CheckType(lua_State* L, int index)
     {
         return lua_isboolean(L, index) ? true : false;
+    }
+
+    static inline bool DefaultValue(lua_State* L, int)
+    {
+        return false;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "bool const &";
     }
 };
 
@@ -464,7 +696,17 @@ struct Stack<char>
 
     static inline bool CheckType(lua_State* L, int index)
     {
-        return lua_isstring(L, index) ? true : false;
+        return lua_type(L, index) == LUA_TSTRING ? true : false;
+    }
+
+    static inline char DefaultValue(lua_State* L, int)
+    {
+        return '\0';
+    }
+
+    static inline const char * RequireType()
+    {
+        return "char";
     }
 };
 
@@ -484,7 +726,17 @@ struct Stack<char const&>
 
     static inline bool CheckType(lua_State* L, int index)
     {
-        return lua_isstring(L, index) ? true : false;
+        return lua_type(L, index) == LUA_TSTRING ? true : false;
+    }
+
+    static inline char DefaultValue(lua_State* L, int)
+    {
+        return '\0';
+    }
+
+    static inline const char * RequireType()
+    {
+        return "char const &";
     }
 };
 
@@ -497,10 +749,14 @@ struct Stack<char const*>
 {
     static inline void Push(lua_State* L, char const* str)
     {
-        if(str != 0)
+        if (str != 0)
+        {
             lua_pushstring(L, str);
+        }
         else
+        {
             lua_pushnil(L);
+        }
     }
     
     static inline char const* Get(lua_State* L, int index)
@@ -510,7 +766,17 @@ struct Stack<char const*>
 
     static inline bool CheckType(lua_State* L, int index)
     {
-        return lua_isstring(L, index) || lua_isnil(L, index) ? true : false;
+        return lua_type(L, index) == LUA_TSTRING || lua_isnil(L, index) ? true : false;
+    }
+
+    static inline char const* DefaultValue(lua_State* L, int)
+    {
+        return nullptr;
+    }
+
+    static inline const char * RequireType()
+    {
+        return "char const *";
     }
 };
 
@@ -535,9 +801,18 @@ struct Stack<std::string>
 
     static inline bool CheckType(lua_State* L, int index)
     {
-        return lua_isstring(L, index) ? true : false;
+        return lua_type(L, index) == LUA_TSTRING;
     }
 
+    static inline std::string DefaultValue(lua_State* L, int)
+    {
+        return "";
+    }
+
+    static inline const char * RequireType()
+    {
+        return "std::string";
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -561,7 +836,17 @@ struct Stack<std::string const&>
 
     static inline bool CheckType(lua_State* L, int index)
     {
-        return lua_isstring(L, index) ? true : false;
+        return lua_type(L, index) == LUA_TSTRING;
+    }
+
+    static inline std::string DefaultValue(lua_State* L, int)
+    {
+        return "";
+    }
+
+    static inline const char * RequireType()
+    {
+        return "std::string const &";
     }
 };
 
@@ -595,9 +880,24 @@ public:
         auto auf = std::make_shared<FunctionTransfer>(L, index);
         func = [auf](P... p)->R{
             lua_State *L = auf->getState();
+            lua_pushcfunction(L, &ShowDebugMessage);
+            auto debugfunc = lua_gettop(L);
             lua_rawgeti(L, LUA_REGISTRYINDEX, auf->getRef());
             int nargs = PushArgs(L, p...);
-            lua_pcall(L, nargs, 1, 0);
+            lua_pcall(L, nargs, 1, debugfunc);
+            lua_remove(L, debugfunc);
+            if (!Stack<R>::CheckType(L, -1))
+            {
+                REDLOG("return type error: expected '" << Stack<R>::RequireType() << "', but got '" << lua_typename(L, lua_type(L, -1)) << "'\n\t in function "<<typeid(R(P...)).name());
+                R value = Stack<R>::DefaultValue(L, -1);
+                lua_pop(L, 1);
+                lua_getglobal(L, "debug");
+                lua_getfield(L, -1, "traceback");
+                lua_pcall(L, 0, 1, 0);
+                REDLOG(Stack<std::string>::Get(L, -1));
+                lua_pop(L, 2);
+                return value;
+            }
             R value = Stack<R>::Get(L, -1);
             lua_pop(L, 1);
             return value;
@@ -610,9 +910,12 @@ public:
         auto auf = std::make_shared<FunctionTransfer>(L, index);
         func = [auf](P... p)->void{
             lua_State *L = auf->getState();
+            lua_pushcfunction(L, &ShowDebugMessage);
+            auto debugfunc = lua_gettop(L);
             lua_rawgeti(L, LUA_REGISTRYINDEX, auf->getRef());
             int nargs = PushArgs(L, p...);
-            lua_pcall(L, nargs, 0, 0);
+            lua_pcall(L, nargs, 0, debugfunc);
+            lua_remove(L, debugfunc);
         };
     }
     
@@ -622,8 +925,11 @@ public:
         auto auf = std::make_shared<FunctionTransfer>(L, index);
         func = [auf]()->void{
             lua_State *L = auf->getState();
+            lua_pushcfunction(L, &ShowDebugMessage);
+            auto debugfunc = lua_gettop(L);
             lua_rawgeti(L, LUA_REGISTRYINDEX, auf->getRef());
-            lua_pcall(L, 0, 0, 0);
+            lua_pcall(L, 0, 0, debugfunc);
+            lua_remove(L, debugfunc);
         };
     }
     
@@ -664,6 +970,9 @@ struct Stack<std::function<FT> >
         if(func) {
             new(lua_newuserdata(L, sizeof(func))) std::function<FT>(func);
             luaL_newmetatable(L, typeid(func).name());
+            lua_pushvalue(L, -2);
+            lua_pushcclosure(L, &StaticLambda<std::function<FT>>::Call, 1);
+            rawsetfield(L, -2, "__call");
             lua_setmetatable(L, -2);            
         } else {
             lua_pushnil(L);
@@ -688,11 +997,21 @@ struct Stack<std::function<FT> >
             if (lua_getmetatable(L, index))
             {
                 luaL_getmetatable(L, typeid(std::function<FT>).name());
-                bool ret = lua_rawequal(L, -1, -2);
+                bool ret = lua_rawequal(L, -1, -2) ? true : false;
                 lua_pop(L, 2);
                 return ret;
             }
         }
         return false;
+    }
+
+    static inline std::function<FT> DefaultValue(lua_State* L, int)
+    {
+        return nullptr;
+    }
+
+    static inline const char * RequireType()
+    {
+        return typeid(std::function<FT>).name();
     }
 };
