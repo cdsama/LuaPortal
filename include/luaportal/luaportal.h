@@ -11,6 +11,12 @@
 #include<functional>
 #include<memory>
 #include<type_traits>
+#include <iostream>
+
+#ifdef _WIN32
+    #include <windows.h>
+#endif // _WIN32
+
 
 namespace luaportal
 {
