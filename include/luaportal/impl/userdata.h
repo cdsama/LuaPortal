@@ -1126,7 +1126,7 @@ struct Stack<T const&>
 
     static typename helper_t::return_type DefaultValue(lua_State* L, int)
     {
-        static helper_t::return_type v = {};
+        static typename helper_t::return_type v = {};
         return v;
     }
 
