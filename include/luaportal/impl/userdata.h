@@ -40,7 +40,7 @@ protected:
     /**
      Get an untyped pointer to the contained class.
      */
-    inline void* const GetPointer()
+    inline void* GetPointer()
     {
         return m_p;
     }
@@ -898,7 +898,7 @@ struct Stack<T*>
         UserdataPtr::Push(L, p);
     }
     
-    static inline T* const Get(lua_State* L, int index)
+    static inline T* Get(lua_State* L, int index)
     {
         return Userdata::Get<T>(L, index, false);
     }
@@ -928,7 +928,7 @@ struct Stack<T* const>
         UserdataPtr::Push(L, p);
     }
     
-    static inline T* const Get(lua_State* L, int index)
+    static inline T* Get(lua_State* L, int index)
     {
         return Userdata::Get<T>(L, index, false);
     }
@@ -937,7 +937,7 @@ struct Stack<T* const>
         return Userdata::CheckType<T>(L, index, false);
     }
 
-    static inline T* const DefaultValue(lua_State* L, int)
+    static inline T* DefaultValue(lua_State* L, int)
     {
         return nullptr;
     }
@@ -957,7 +957,7 @@ struct Stack<T const*>
         UserdataPtr::Push(L, p);
     }
     
-    static inline T const* const Get(lua_State* L, int index)
+    static inline T const* Get(lua_State* L, int index)
     {
         return Userdata::Get<T>(L, index, true);
     }
@@ -987,7 +987,7 @@ struct Stack<T const* const>
         UserdataPtr::Push(L, p);
     }
     
-    static inline T const* const Get(lua_State* L, int index)
+    static inline T const* Get(lua_State* L, int index)
     {
         return Userdata::Get<T>(L, index, true);
     }
@@ -997,7 +997,7 @@ struct Stack<T const* const>
         return Userdata::CheckType<T>(L, index, true);
     }
 
-    static inline T const* const DefaultValue(lua_State* L, int)
+    static inline T const* DefaultValue(lua_State* L, int)
     {
         return nullptr;
     }
