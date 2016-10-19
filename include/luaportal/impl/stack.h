@@ -850,7 +850,7 @@ struct Stack<std::string const&>
     }
 };
 
-static int PushArgs(lua_State *L)
+static inline int PushArgs(lua_State *L)
 {
     return 0;
 }

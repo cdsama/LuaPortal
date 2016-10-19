@@ -267,7 +267,6 @@ private:
     {
         AutoClearStack acs(L);
         index = lua_absindex(L, index);
-        Userdata* ud = 0;
 
         bool mismatch = false;
         char const* got = 0;
